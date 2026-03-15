@@ -4,23 +4,63 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+#Introduction 
+##Read Data
 
 ```{r}
-1 + 1
+insurance <- read.csv("insurance.csv")
+summary(insurance)
 ```
 
-You can add options to executable code like this
+#Analysis 
+##EDA 
+```{r} 
+library(ggplot2)
 
-```{r}
-#| echo: false
-2 * 2
+
+# Plot 1: Distribution of charges (histogram)
+p1 <- ggplot(insurance, aes(x = charges)) +
+  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
+  labs(title = "Distribution of Insurance Charges",
+       x = "Charges (USD)", y = "Count") +
+  theme_minimal()
+
+ggsave("plot1_charges_distribution.png", plot = p1, width = 7, height = 5, dpi = 300)
+
+# Plot 2: Age vs charges, colored by smoker status
+p2 <- ggplot(insurance, aes(x = age, y = charges, color = smoker)) +
+  geom_point(alpha = 0.5) +
+  scale_color_manual(values = c("no" = "steelblue", "yes" = "tomato")) +
+  labs(title = "Age vs. Insurance Charges by Smoking Status",
+       x = "Age (years)", y = "Charges (USD)", color = "Smoker") +
+  theme_minimal()
+
+ggsave("plot2_age_vs_charges.png", plot = p2, width = 7, height = 5, dpi = 300)
+
+# Plot 3: BMI vs charges, colored by smoker status
+p3 <- ggplot(insurance, aes(x = bmi, y = charges, color = smoker)) +
+  geom_point(alpha = 0.5) +
+  scale_color_manual(values = c("no" = "steelblue", "yes" = "tomato")) +
+  labs(title = "BMI vs. Insurance Charges by Smoking Status",
+       x = "BMI (kg/m²)", y = "Charges (USD)", color = "Smoker") +
+  theme_minimal()
+
+ggsave("plot3_bmi_vs_charges.png", plot = p3, width = 7, height = 5, dpi = 300)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
