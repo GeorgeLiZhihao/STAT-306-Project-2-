@@ -4,19 +4,17 @@ format: html
 editor: visual
 ---
 
-#Introduction 
-##Read Data
+#Introduction ##Read Data
 
 ```{r}
 insurance <- read.csv("insurance.csv")
 summary(insurance)
 ```
 
-#Analysis 
-##EDA 
-```{r} 
-library(ggplot2)
+#Analysis ##EDA
 
+```{r}
+library(ggplot2)
 
 # Plot 1: Distribution of charges (histogram)
 p1 <- ggplot(insurance, aes(x = charges)) +
@@ -27,40 +25,21 @@ p1 <- ggplot(insurance, aes(x = charges)) +
 
 ggsave("plot1_charges_distribution.png", plot = p1, width = 7, height = 5, dpi = 300)
 
-# Plot 2: Age vs charges, colored by smoker status
-p2 <- ggplot(insurance, aes(x = age, y = charges, color = smoker)) +
-  geom_point(alpha = 0.5) +
-  scale_color_manual(values = c("no" = "steelblue", "yes" = "tomato")) +
-  labs(title = "Age vs. Insurance Charges by Smoking Status",
-       x = "Age (years)", y = "Charges (USD)", color = "Smoker") +
-  theme_minimal()
-
-ggsave("plot2_age_vs_charges.png", plot = p2, width = 7, height = 5, dpi = 300)
-
-# Plot 3: BMI vs charges, colored by smoker status
-p3 <- ggplot(insurance, aes(x = bmi, y = charges, color = smoker)) +
-  geom_point(alpha = 0.5) +
-  scale_color_manual(values = c("no" = "steelblue", "yes" = "tomato")) +
-  labs(title = "BMI vs. Insurance Charges by Smoking Status",
-       x = "BMI (kg/m²)", y = "Charges (USD)", color = "Smoker") +
-  theme_minimal()
-
-ggsave("plot3_bmi_vs_charges.png", plot = p3, width = 7, height = 5, dpi = 300)
 ```
 
+### take log transform for charges
 
+```{r}
+insurance$log_charges <- log(insurance$charges)
 
+ggplot(insurance, aes(x = log_charges)) +
+  geom_histogram(fill = "#4472C4", color = "white", bins = 30) +
+  labs(
+    title = "Distribution of Log Insurance Charges",
+    x = "Log Charges (log USD)",
+    y = "Count"
+  ) +
+  theme_bw()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+ggsave("log_charges_histogram.png", width = 8, height = 5, dpi = 300)
+```
