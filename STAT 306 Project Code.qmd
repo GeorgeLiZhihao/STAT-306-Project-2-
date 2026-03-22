@@ -24,7 +24,7 @@ p1 <- ggplot(insurance, aes(x = charges)) +
   theme_minimal()
 
 ggsave("plot1_charges_distribution.png", plot = p1, width = 7, height = 5, dpi = 300)
-
+p1
 ```
 
 ### take log transform for charges
@@ -32,7 +32,7 @@ ggsave("plot1_charges_distribution.png", plot = p1, width = 7, height = 5, dpi =
 ```{r}
 insurance$log_charges <- log(insurance$charges)
 
-ggplot(insurance, aes(x = log_charges)) +
+p2 <- ggplot(insurance, aes(x = log_charges)) +
   geom_histogram(fill = "#4472C4", color = "white", bins = 30) +
   labs(
     title = "Distribution of Log Insurance Charges",
@@ -41,5 +41,93 @@ ggplot(insurance, aes(x = log_charges)) +
   ) +
   theme_bw()
 
-ggsave("log_charges_histogram.png", width = 8, height = 5, dpi = 300)
+ggsave("log_charges_histogram.png", plot = p2, width = 8, height = 5, dpi = 300)
+p2
 ```
+
+## Ages VS log(charges) by smoking status
+
+```{r}
+p3 <- ggplot(insurance, aes(x = age, y = log_charges, color = smoker)) +
+  geom_point(alpha = 0.5) +
+  scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
+                     name = "Smoker") +
+  labs(
+    title = "Age vs. Log Insurance Charges by Smoking Status",
+    x = "Age (years)",
+    y = "Log Charges (log USD)"
+  ) +
+  theme_bw()
+
+p3
+
+ggsave("plot3_age_vs_log_charges.png", plot = p3, width = 8, height = 5, dpi = 300)
+```
+
+
+## BMI vs. Charges by Smoking Status
+```{r}
+p4 <- ggplot(insurance, aes(x = bmi, y = log_charges, color = smoker)) +
+  geom_point(alpha = 0.5) +
+  scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
+                     name = "Smoker") +
+  labs(
+    title = "BMI vs. Log Insurance Charges by Smoking Status",
+    x = "BMI (kg/m²)",
+    y = "Log Charges (log USD)"
+  ) +
+  theme_bw()
+
+p4
+
+ggsave("plot4_bmi_vs_log_charges.png", plot = p4, width = 8, height = 5, dpi = 300)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
