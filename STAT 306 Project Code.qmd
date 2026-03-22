@@ -178,3 +178,9 @@ reg1=lm(log_charges~age+bmi+smoker,data=insurance)
 summary(reg1)
 ```
 
+<<<<<<< HEAD
+=======
+```{r}
+exp(reg1$coefficients)
+```
+>>>>>>> f0c97a6 (Add EDA Graphs and an addictive model)
