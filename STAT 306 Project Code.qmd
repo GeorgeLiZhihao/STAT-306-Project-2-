@@ -44,7 +44,7 @@ ggplot(insurance, aes(x = bmi, y = charges)) +
 # Plot: Boxplot of smoker v.s. charges
 ggplot(insurance, aes(x = smoker, y = charges)) +
   geom_boxplot() +
-  labs(title = "Smoker vs Charges",
+  labs(title = "Charges vs Smoker",
        x = "Smoker",
        y = "Charges")
 
@@ -90,7 +90,7 @@ p3 <- ggplot(insurance, aes(x = age, y = log_charges, color = smoker)) +
   scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
                      name = "Smoker") +
   labs(
-    title = "Age vs. Log Insurance Charges by Smoking Status",
+    title = "Log Tansfirned Charges vs. Age by Smoking Status",
     x = "Age (years)",
     y = "Log Charges (log USD)"
   ) +
@@ -109,7 +109,7 @@ p4 <- ggplot(insurance, aes(x = bmi, y = log_charges, color = smoker)) +
   scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
                      name = "Smoker") +
   labs(
-    title = "BMI vs. Log Insurance Charges by Smoking Status",
+    title = "Log Tranformed Charges vs. BMI by Smoking Status",
     x = "BMI (kg/m²)",
     y = "Log Charges (log USD)"
   ) +
@@ -119,6 +119,37 @@ p4
 
 ggsave("plot4_bmi_vs_log_charges.png", plot = p4, width = 8, height = 5, dpi = 300)
 ```
+
+```{r}
+p10 <- ggplot(insurance, aes(x = bmi, y = age, color = smoker)) +
+  geom_point(alpha = 0.5) +
+  scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
+                     name = "Smoker") +
+  labs(
+    title = "Age vs. BMI by Smoking Status",
+    x = "BMI (kg/m²)",
+    y = "Age"
+  ) +
+  theme_bw()
+
+p10
+cor(insurance$age,insurance$bmi)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Model Fitting
 
