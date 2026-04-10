@@ -8,7 +8,8 @@ editor: visual
 library(ggplot2)
 library(dplyr)
 library(gridExtra)
-library(car)  
+library(car)
+library(leaps)
 ```
 
 # Introduction
@@ -19,9 +20,11 @@ library(car)
 insurance <- read.csv("insurance.csv")
 summary(insurance)
 ```
+
 # Analysis
 
 ## EDA
+
 ```{r}
 # Plot: Distribution of charges (histogram)
 p1 <- ggplot(insurance, aes(x = charges)) +
@@ -33,11 +36,7 @@ p1 <- ggplot(insurance, aes(x = charges)) +
 p1
 ggsave("plot1_charges_distribution.png", plot = p1, width = 7, height = 5, dpi = 300)
 
-
 ```
-
-
-## Log(charges) VS Age by smoking status
 
 ```{r}
 p2 <- ggplot(insurance, aes(x = age, y = log(charges), color = smoker)) +
@@ -58,8 +57,6 @@ non_smoker <- subset(insurance, smoker == "no")
 smoker <- subset(insurance, smoker == "yes")
 smoker
 ```
-
-
 
 ```{r}
 # Plot: Age vs LogCharges in Smokers
@@ -85,124 +82,101 @@ p4<- ggplot(non_smoker, aes(x = age, y = charges, colour=bmi)) +
 p4
 ```
 
-
 ## Model Fitting
 
 ```{r}
-# Fit an addictive model
-insurance$log_charges <- log(insurance$charges)
-reg1=lm(log_charges~age+bmi+smoker,data=insurance)
-summary(reg1)
-```
+regfit_ns <- regsubsets(
+  charges ~ age + sex + bmi + children + region,
+  data = non_smoker,
+  nvmax = 10
+)
 
-```{r}
-library(broom)
-library(dplyr)
-exp(reg1$coefficients)
-tidy(reg1, conf.int = TRUE) %>%
-  filter(term != "(Intercept)") %>%
-  mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
-  ggplot(aes(x = term, y = estimate, ymin = conf.low, ymax = conf.high)) +
-  geom_pointrange(color = "#4472C4", size = 0.8) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "red") + 
-  coord_flip() +
-  labs(title = "Exponentiated Coefficients with 95% CI",
-       x = "", y = "Multiplicative Effect on Charges") +
-  theme_bw()
-```
-
-```{r}
-# Define a new Dataframe
-diag_data <- data.frame(
-  fitted = fitted(reg1),
-  residuals = resid(reg1)
+regfit_s <- regsubsets(
+  log_charges ~ age + sex + bmi + children + region,
+  data = smoker,
+  nvmax = 10
 )
 ```
 
 ```{r}
-# Residual and Q-Q normal Plot
-library(patchwork)
-
-p_resid <- ggplot(diag_data, aes(x = fitted, y = residuals)) +
-  geom_point(alpha = 0.3, color = "#4472C4") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(title = "Residuals vs Fitted",
-       x = "Fitted Values (log scale)",
-       y = "Residuals") +
-  theme_bw()
-
-p_qq <- ggplot(diag_data, aes(sample = residuals)) +
-  stat_qq(alpha = 0.3, color = "#4472C4") +
-  stat_qq_line(color = "red", linetype = "dashed") +
-  labs(title = "Normal Q-Q Plot",
-       x = "Theoretical Quantiles",
-       y = "Sample Quantiles") +
-  theme_bw()
-
-combined <- p_resid + p_qq
-
-ggsave("diagnostic_plots.png", plot = combined, width = 12, height = 5, dpi = 300)
-combined
+summary_ns <- summary(regfit_ns)
+summary_s  <- summary(regfit_s)
 ```
 
 ```{r}
-# fit an interaction model
-reg2=lm(log_charges~(age+bmi)*smoker,data=insurance)
-summary(reg2)
+plot(summary_ns$cp,
+     xlab = "Number of predictors",
+     ylab = "Cp",
+     main = "Mallows Cp (Non-smokers)",
+     type = "b")
 
+abline(0, 1, col = "red")   # Cp ≈ p line
 ```
 
 ```{r}
-exp(reg2$coefficients)
-tidy(reg2, conf.int = TRUE) %>%
-  filter(term != "(Intercept)") %>%
-  mutate(
-    term = recode(term,
-      "age"          = "Age",
-      "bmi"          = "BMI (non-smoker)",
-      "smokeryes"    = "Smoker",
-      "bmi:smokeryes"= "BMI × Smoker"
-    ),
-    significant = p.value < 0.05
-  ) %>%
-  ggplot(aes(x = reorder(term, estimate), y = estimate, 
-             ymin = conf.low, ymax = conf.high,
-             color = significant)) +
-  geom_pointrange(size = 0.8) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
-  scale_color_manual(values = c("TRUE" = "#4472C4", "FALSE" = "#aaaaaa"),
-                     labels = c("TRUE" = "p < 0.05", "FALSE" = "p ≥ 0.05"),
-                     name = "Significance") +
-  coord_flip() +
-  labs(title = "Coefficient Estimates with 95% CI (Interaction Model)",
-       x = "", y = "Estimate (log scale)") +
-  theme_bw()
+plot(summary_s$cp,
+     xlab = "Number of predictors",
+     ylab = "Cp",
+     main = "Mallows Cp (Smokers)",
+     type = "b")
+
+abline(0, 1, col = "red")
 ```
 
 ```{r}
-# Residual and Q-Q plot
-diag_data2 <- data.frame(
-  fitted    = fitted(reg2),
-  residuals = residuals(reg2)
+which.min(summary_ns$cp)
+which.min(summary_s$cp)
+```
+
+```{r}
+summary_ns$which[which.min(summary_ns$cp), ]
+summary_s$which[(which.min(summary_s$cp)), ]
+```
+
+```{r}
+model_with_region <- lm(log_charges ~ age + sex + bmi + region,
+                        data = smoker)
+
+# Model WITHOUT region
+model_without_region <- lm(log_charges ~ age + sex + bmi ,
+                           data = smoker)
+
+# Create comparison table
+comparison_smoker <- data.frame(
+  Model = c("With Region", "Without Region"),
+  Adj_R2 = c(summary(model_with_region)$adj.r.squared,
+             summary(model_without_region)$adj.r.squared),
+  AIC = c(AIC(model_with_region),
+          AIC(model_without_region)),
+  BIC = c(BIC(model_with_region),
+          BIC(model_without_region))
 )
 
-p_resid2 <- ggplot(diag_data2, aes(x = fitted, y = residuals)) +
-  geom_point(alpha = 0.3, color = "#4472C4") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(title = "Residuals vs Fitted (Interaction Model)",
-       x = "Fitted Values (log scale)",
-       y = "Residuals") +
-  theme_bw()
+comparison_smoker
+```
 
-p_qq2 <- ggplot(diag_data2, aes(sample = residuals)) +
-  stat_qq(alpha = 0.3, color = "#4472C4") +
-  stat_qq_line(color = "red", linetype = "dashed") +
-  labs(title = "Normal Q-Q Plot (Interaction Model)",
-       x = "Theoretical Quantiles",
-       y = "Sample Quantiles") +
-  theme_bw()
+```{r}
+model_ns_with_region <- lm(charges ~ age + children + region,
+                           data = non_smoker)
 
-combined2 <- p_resid2 + p_qq2
-ggsave("diagnostic_plots_interaction.png", plot = combined2, width = 12, height = 5, dpi = 300)
-combined2
+# Model WITHOUT region
+model_ns_without_region <- lm(charges ~ age + children,
+                              data = non_smoker)
+
+# Comparison table
+comparison_ns <- data.frame(
+  Model = c("With Region", "Without Region"),
+  Adj_R2 = c(summary(model_ns_with_region)$adj.r.squared,
+             summary(model_ns_without_region)$adj.r.squared),
+  AIC = c(AIC(model_ns_with_region),
+          AIC(model_ns_without_region)),
+  BIC = c(BIC(model_ns_with_region),
+          BIC(model_ns_without_region))
+)
+
+comparison_ns
+```
+
+```{r}
+summary(model_ns_with_region)
 ```
