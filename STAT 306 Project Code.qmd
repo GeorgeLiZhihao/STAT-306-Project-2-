@@ -6,6 +6,9 @@ editor: visual
 
 ```{r}
 library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(car)  
 ```
 
 # Introduction
@@ -16,40 +19,9 @@ library(ggplot2)
 insurance <- read.csv("insurance.csv")
 summary(insurance)
 ```
-
 # Analysis
 
 ## EDA
-
-```{r}
-# Plot: Age vs charges
-ggplot(insurance, aes(x = age, y = charges)) +
-  geom_point(alpha=0.5) +
-  labs(title = "Age vs Charges",
-       x = "Age",
-       y = "Charges")
-
-```
-
-```{r}
-# Plot: BMI vs charges
-ggplot(insurance, aes(x = bmi, y = charges)) +
-  geom_point(alpha=0.5) +
-  labs(title = "BMI vs Charges",
-       x = "BMI",
-       y = "Charges")
-```
-
-```{r}
-# Plot: Boxplot of smoker v.s. charges
-ggplot(insurance, aes(x = smoker, y = charges)) +
-  geom_boxplot() +
-  labs(title = "Charges vs Smoker",
-       x = "Smoker",
-       y = "Charges")
-
-```
-
 ```{r}
 # Plot: Distribution of charges (histogram)
 p1 <- ggplot(insurance, aes(x = charges)) +
@@ -64,91 +36,54 @@ ggsave("plot1_charges_distribution.png", plot = p1, width = 7, height = 5, dpi =
 
 ```
 
-### Take log transform for charges
+
+## Log(charges) VS Age by smoking status
 
 ```{r}
-insurance$log_charges <- log(insurance$charges)
-
-p2 <- ggplot(insurance, aes(x = log_charges)) +
-  geom_histogram(fill = "#4472C4", color = "white", bins = 30) +
-  labs(
-    title = "Distribution of Log Insurance Charges",
-    x = "Log Charges (log USD)",
-    y = "Count"
-  ) +
-  theme_bw()
-
-ggsave("log_charges_histogram.png", plot = p2, width = 8, height = 5, dpi = 300)
-p2
-```
-
-## Ages VS log(charges) by smoking status
-
-```{r}
-p3 <- ggplot(insurance, aes(x = age, y = log_charges, color = smoker)) +
+p2 <- ggplot(insurance, aes(x = age, y = log(charges), color = smoker)) +
   geom_point(alpha = 0.5) +
   scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
                      name = "Smoker") +
   labs(
-    title = "Log Tansfirned Charges vs. Age by Smoking Status",
+    title = "Log Tansformed Charges vs. Age by Smoking Status",
     x = "Age (years)",
     y = "Log Charges (log USD)"
   ) +
   theme_bw()
-
-p3
-
-ggsave("plot3_age_vs_log_charges.png", plot = p3, width = 8, height = 5, dpi = 300)
+p2
 ```
 
-## BMI vs. Charges by Smoking Status
+```{r}
+non_smoker <- subset(insurance, smoker == "no")
+smoker <- subset(insurance, smoker == "yes")
+smoker
+```
+
+
 
 ```{r}
-p4 <- ggplot(insurance, aes(x = bmi, y = log_charges, color = smoker)) +
-  geom_point(alpha = 0.5) +
-  scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
-                     name = "Smoker") +
-  labs(
-    title = "Log Tranformed Charges vs. BMI by Smoking Status",
-    x = "BMI (kg/m²)",
-    y = "Log Charges (log USD)"
-  ) +
-  theme_bw()
+# Plot: Age vs LogCharges in Smokers
+smoker <- smoker %>%
+  filter(smoker == "yes") %>%
+  mutate(log_charges = log(charges))
 
+p3 <- ggplot(smoker, aes(x = age, y = log_charges, color = bmi)) +
+  geom_point(alpha = 0.6) +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Age vs LogCharges colored by BMI in Smokers")
+
+```
+
+```{r}
+# Plot: Age vs charges in NonSmoker
+p4<- ggplot(non_smoker, aes(x = age, y = charges, colour=bmi)) +
+  geom_point(alpha=0.5) +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Charges vs Age in Non-mokers",
+       x = "Age",
+       y = "Charges")
 p4
-
-ggsave("plot4_bmi_vs_log_charges.png", plot = p4, width = 8, height = 5, dpi = 300)
 ```
-
-```{r}
-p10 <- ggplot(insurance, aes(x = bmi, y = age, color = smoker)) +
-  geom_point(alpha = 0.5) +
-  scale_color_manual(values = c("no" = "#4472C4", "yes" = "#E05C5C"),
-                     name = "Smoker") +
-  labs(
-    title = "Age vs. BMI by Smoking Status",
-    x = "BMI (kg/m²)",
-    y = "Age"
-  ) +
-  theme_bw()
-
-p10
-cor(insurance$age,insurance$bmi)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ## Model Fitting
@@ -175,14 +110,14 @@ tidy(reg1, conf.int = TRUE) %>%
        x = "", y = "Multiplicative Effect on Charges") +
   theme_bw()
 ```
-```{r} 
+
+```{r}
 # Define a new Dataframe
 diag_data <- data.frame(
   fitted = fitted(reg1),
   residuals = resid(reg1)
 )
 ```
-
 
 ```{r}
 # Residual and Q-Q normal Plot
@@ -217,7 +152,6 @@ summary(reg2)
 
 ```
 
-
 ```{r}
 exp(reg2$coefficients)
 tidy(reg2, conf.int = TRUE) %>%
@@ -244,7 +178,6 @@ tidy(reg2, conf.int = TRUE) %>%
        x = "", y = "Estimate (log scale)") +
   theme_bw()
 ```
-
 
 ```{r}
 # Residual and Q-Q plot
@@ -273,28 +206,3 @@ combined2 <- p_resid2 + p_qq2
 ggsave("diagnostic_plots_interaction.png", plot = combined2, width = 12, height = 5, dpi = 300)
 combined2
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
