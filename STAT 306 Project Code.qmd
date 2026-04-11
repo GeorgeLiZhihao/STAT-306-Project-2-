@@ -69,6 +69,7 @@ p3 <- ggplot(smoker, aes(x = age, y = log_charges, color = bmi)) +
   scale_color_gradient(low = "blue", high = "red") +
   labs(title = "Age vs LogCharges colored by BMI in Smokers")
 
+p3
 ```
 
 ```{r}
@@ -134,11 +135,12 @@ summary_s$which[(which.min(summary_s$cp)), ]
 ```
 
 ```{r}
-model_with_region <- lm(log_charges ~ age + sex + bmi + region,
+#SMOKERS (discussion of model selection in region covariate)
+model_with_region <- lm(log_charges ~ age + bmi + region,
                         data = smoker)
 
 # Model WITHOUT region
-model_without_region <- lm(log_charges ~ age + sex + bmi ,
+model_without_region <- lm(log_charges ~ age + bmi ,
                            data = smoker)
 
 # Create comparison table
@@ -156,11 +158,12 @@ comparison_smoker
 ```
 
 ```{r}
-model_ns_with_region <- lm(charges ~ age + children + region,
+#NON_SMOKERS (discussion of model selection in region covariate)
+model_ns_with_region <- lm(charges ~ age + sex+ children + region ,
                            data = non_smoker)
 
 # Model WITHOUT region
-model_ns_without_region <- lm(charges ~ age + children,
+model_ns_without_region <- lm(charges ~ age + sex + children,
                               data = non_smoker)
 
 # Comparison table
@@ -178,5 +181,62 @@ comparison_ns
 ```
 
 ```{r}
+summary(model_without_region)
+```
+
+
+```{r}
 summary(model_ns_with_region)
 ```
+
+
+```{r}
+# Model with region covariate in non-smokers
+# Residual plot + QQ plot (side by side)
+par(mfrow = c(1, 2))
+
+# Residuals vs Fitted
+plot(model_ns_with_region, which = 1,
+     main = "Non-smokers: Residuals vs Fitted")
+
+# Q-Q plot
+plot(model_ns_with_region, which = 2,
+     main = "Non-smokers: Normal Q-Q Plot")
+```
+
+```{r}
+# Model without region covariate in smokers
+par(mfrow = c(1, 2))
+
+# Residuals vs Fitted
+plot(model_without_region, which = 1,
+     main = "Smokers: Residuals vs Fitted")
+
+# Q-Q plot
+plot(model_without_region, which = 2,
+     main = "Smokers: Normal Q-Q Plot")
+```
+
+
+```{r}
+# Model with age:bmi interaction in smokers
+model_age_bmi_interaction <- lm(log_charges ~ age + bmi + age:bmi ,
+                           data = smoker)
+summary(model_age_bmi_interaction)
+```
+
+
+```{r}
+# Model with age:bmi interaction in smokers
+par(mfrow = c(1, 2), oma = c(0, 0, 4, 0))  # put 2 plots side by side
+
+plot(model_age_bmi_interaction, which = 1,
+     main = "", sub.caption = "")
+
+plot(model_age_bmi_interaction, which = 2,
+     main = "", sub.caption = "")
+
+mtext("Residual Diagnostics for Smokers (Age × BMI Model)", 
+      outer = TRUE, cex = 1.3, font = 2)
+```
+
