@@ -149,9 +149,7 @@ comparison_smoker <- data.frame(
   Adj_R2 = c(summary(model_with_region)$adj.r.squared,
              summary(model_without_region)$adj.r.squared),
   AIC = c(AIC(model_with_region),
-          AIC(model_without_region)),
-  BIC = c(BIC(model_with_region),
-          BIC(model_without_region))
+          AIC(model_without_region))
 )
 
 comparison_smoker
@@ -172,9 +170,7 @@ comparison_ns <- data.frame(
   Adj_R2 = c(summary(model_ns_with_region)$adj.r.squared,
              summary(model_ns_without_region)$adj.r.squared),
   AIC = c(AIC(model_ns_with_region),
-          AIC(model_ns_without_region)),
-  BIC = c(BIC(model_ns_with_region),
-          BIC(model_ns_without_region))
+          AIC(model_ns_without_region))
 )
 
 comparison_ns
